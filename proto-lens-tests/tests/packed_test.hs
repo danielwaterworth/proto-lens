@@ -10,6 +10,7 @@ import Proto.Packed
 import Lens.Family2 ((&), (.~))
 import Data.ProtoLens
 import Data.Monoid (mconcat, mempty, (<>))
+import qualified Data.Vector as V
 
 import Data.ProtoLens.TestUtil
 
@@ -23,12 +24,12 @@ defFoo = def
 main = testMain
     [ serializeTo "default" defFoo mempty $ tagged 2 $ Lengthy mempty
     , serializeTo "repeated unpacked"
-          (defFoo & a .~ [1..3])
+          (defFoo & a .~ V.fromList [1..3])
           (vcat [keyed "a" x | x <- [1..3]])
           $ mconcat [tagged 1 $ VarInt x | x <- [1..3]]
             <> tagged 2 (Lengthy mempty)
     , serializeTo "repeated packed"
-          (defFoo & b .~ [1..3])
+          (defFoo & b .~ V.fromList [1..3])
           (vcat [keyed "b" x | x <- [1..3]])
           $ tagged 2 $ Lengthy $ mconcat [varInt x | x <- [1..3]]
     , runTypedTest (roundTripTest "roundtrip" :: TypedTest Foo)

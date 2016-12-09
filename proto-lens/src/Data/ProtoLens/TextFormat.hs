@@ -28,6 +28,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text.Encoding as Text
 import qualified Data.Text.Lazy as Lazy
+import qualified Data.Vector as V
 import Numeric (showOct)
 import Text.Parsec (parse)
 import Text.PrettyPrint
@@ -83,6 +84,7 @@ pprintField msg (name, FieldDescriptor _ typeDescr accessor)
         OptionalField f -> catMaybes [msg ^. f]
         -- TODO: better printing for packed fields
         RepeatedField _ f -> msg ^. f
+        RepeatedField' _ f -> V.toList (msg ^. f)
         MapField k v f -> pairToMsg <$> Map.assocs (msg ^. f)
           where pairToMsg (x,y) = def & k .~ x
                                       & v .~ y
@@ -202,6 +204,7 @@ modifyField :: FieldAccessor msg value -> value -> msg -> msg
 modifyField (PlainField _ f) value = set f value
 modifyField (OptionalField f) value = set f (Just value)
 modifyField (RepeatedField _ f) value = over f (value :)
+modifyField (RepeatedField' _ f) value = over f (V.cons value)
 modifyField (MapField key value f) mapElem
     = over f (Map.insert (mapElem ^. key) (mapElem ^. value))
 

@@ -14,6 +14,7 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Builder as Builder
 import qualified Data.ByteString.Lazy as Lazy
 import Data.Monoid ((<>))
+import qualified Data.Vector as V
 import Proto.Proto3
     ( Foo
     , Foo'FooEnum(..)
@@ -44,7 +45,7 @@ main = testMain
         "a: 150"
         $ tagged 1 $ VarInt 150
     , serializeTo "repeated-string"
-        (def & b .~ ["one", "two"] :: Foo)
+        (def & b .~ V.fromList ["one", "two"] :: Foo)
         (vcat $ map (keyed "b") ["one", "two"])
         $ mconcat (map (tagged 2 . Lengthy) ["one", "two"])
     , testGroup "oneof"

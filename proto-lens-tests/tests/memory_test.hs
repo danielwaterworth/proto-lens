@@ -10,6 +10,7 @@ import Proto.Memory
 import Lens.Family2 ((&), (.~), (^.))
 import Data.ProtoLens
 import Data.Monoid (mconcat, mempty, (<>))
+import qualified Data.Vector as V
 import Test.Framework.Providers.HUnit (testCase)
 
 import Data.ProtoLens.TestUtil
@@ -19,7 +20,7 @@ defMemory = def
 
 main =
   testMain $ (: []) $ testCase "memory" $ do
-    let value = defMemory & data' .~ replicate 100000000 pi
+    let value = defMemory & data' .~ V.fromList (replicate 100000000 pi)
     let msg = encodeMessage value
     let output = (decodeMessageOrDie msg :: Memory) ^. data'
     output `seq` return ()

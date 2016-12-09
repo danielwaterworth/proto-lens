@@ -21,6 +21,7 @@ import qualified Data.ByteString as B
 import Data.ByteString.Builder (word8)
 import Data.Monoid (mconcat)
 import Data.Word (Word8)
+import qualified Data.Vector as V
 
 import Data.ProtoLens.TestUtil
 
@@ -52,7 +53,7 @@ embeddedTest = canonicalTest
 
 packedIntsTest = canonicalTest
     "packed-ints"
-    (def & d .~ [3,270,86942] :: Test4)
+    (def & d .~ V.fromList [3,270,86942] :: Test4)
     "d: 3\nd: 270\nd: 86942"
     [0x22, 0x06, 0x03, 0x8e, 0x02, 0x9e, 0xa7, 0x05]
 

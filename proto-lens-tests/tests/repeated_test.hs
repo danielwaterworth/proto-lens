@@ -13,6 +13,7 @@ import Data.ProtoLens
 import Lens.Family2 ((&), (.~))
 import Data.ByteString.Builder (byteString)
 import Data.Monoid (mempty, mconcat, (<>))
+import qualified Data.Vector as V
 
 import Data.ProtoLens.TestUtil
 
@@ -25,29 +26,29 @@ defBar = def
 main = testMain
     [ serializeTo "default" defFoo mempty mempty
     , serializeTo "int32"
-          (defFoo & a .~ [1..3])
+          (defFoo & a .~ V.fromList [1..3])
           (vcat $ map (keyed "a") [1..3])
           $ mconcat [tagged 1 $ VarInt x | x <- [1..3]]
     , serializeTo "string"
-          (defFoo & b .~ ["one", "two", "three"])
+          (defFoo & b .~ V.fromList ["one", "two", "three"])
           (vcat $ map (keyed "b") ["one", "two", "three"])
           $ mconcat [ tagged 2 $ Lengthy $ byteString x
                     | x <- ["one", "two", "three"]
                     ]
     , serializeTo "nested/empty"
-          (defFoo & c .~ [def, def])
+          (defFoo & c .~ V.fromList [def, def])
           (braced "c" mempty $+$ braced "c" mempty)
           $ tagged 3 (Lengthy mempty) <> tagged 3 (Lengthy mempty)
     , serializeTo "nested/fixed32"
-          (defFoo & c .~ [defBar & d .~ [1..3]])
+          (defFoo & c .~ V.fromList [defBar & d .~ V.fromList [1..3]])
           (braced "c" $ vcat $ map (keyed "d") [1..3])
           $ tagged 3 $ Lengthy $ mconcat [tagged 3 $ Fixed32 x | x <- [1..3]]
     , serializeTo "nested/fixed64"
-          (defFoo & c .~ [defBar & e .~ [1..3]])
+          (defFoo & c .~ V.fromList [defBar & e .~ V.fromList [1..3]])
           (braced "c" $ vcat $ map (keyed "e") [1..3])
           $ tagged 3 $ Lengthy $ mconcat [tagged 4 $ Fixed64 x | x <- [1..3]]
     , serializeTo "nested/repeated"
-          (defFoo & c .~ [defBar & d .~ [1..3], defBar & e .~ [1..3]])
+          (defFoo & c .~ V.fromList [defBar & d .~ V.fromList [1..3], defBar & e .~ V.fromList [1..3]])
           (braced "c" (vcat $ map (keyed "d") [1..3])
               $+$ braced "c" (vcat $ map (keyed "e") [1..3]))
           $ tagged 3 (Lengthy $ mconcat [tagged 3 $ Fixed32 x | x <- [1..3]])
@@ -56,9 +57,9 @@ main = testMain
     -- in the correct order.  (We fake this situation by appending the encoding
     -- of two different messages of the same type.)
     , deserializeFrom "nested/duplicateTag"
-        (Just (defFoo & a .~ [1,2,3,4] :: Foo))
-        $ buildMessage (defFoo & a .~ [1,2] :: Foo)
-            <> buildMessage (defFoo & a .~ [3,4] :: Foo)
+        (Just (defFoo & a .~ V.fromList [1,2,3,4] :: Foo))
+        $ buildMessage (defFoo & a .~ V.fromList [1,2] :: Foo)
+            <> buildMessage (defFoo & a .~ V.fromList [3,4] :: Foo)
     , testGroup "roundtrip"
         [ runTypedTest (roundTripTest "foo" :: TypedTest Foo)
         , runTypedTest (roundTripTest "bar" :: TypedTest Bar)

@@ -25,3 +25,4 @@ library
                 , text == 1.2.*
                 , lens-family == 1.2.*
                 , QuickCheck == 2.8.*
+                , vector == 0.11.*

@@ -35,6 +35,7 @@ import qualified Data.ByteString.Lazy as L
 import Data.Monoid (mconcat, mempty)
 import Data.Foldable (foldMap, toList, foldl')
 import Lens.Family2 (set, over, (^.), (&))
+import qualified Data.Vector as V
 
 -- TODO: We could be more incremental when parsing/encoding length-based fields,
 -- rather than forcing the whole thing.  E.g., for encoding we're doing extra
@@ -113,6 +114,12 @@ parseAndAddField
               RepeatedField Packed f -> do
                   xs <- getPackedVals
                   return $ over f (xs++) msg
+              RepeatedField' Unpacked f -> do
+                  x <- getSimpleVal
+                  return $ over f (V.cons x) msg
+              RepeatedField' Packed f -> do
+                  xs <- getPackedVals
+                  return $ over f (V.fromList xs V.++) msg
               MapField keyLens valueLens f -> do
                   entry <- getSimpleVal
                   return $ over f
@@ -157,6 +164,17 @@ messageFieldToVals (FieldDescriptor _ typeDescriptor accessor) msg =
                    | src <- toList (msg ^. f)
                    ]
             RepeatedField Packed f
+                -> [WireValue Lengthy v]
+                     where v = L.toStrict $ toLazyByteString
+                               $ mconcat
+                                 [ putWireValue wt (convert src)
+                                 | src <- toList (msg ^. f)
+                                 ]
+            RepeatedField' Unpacked f
+                -> [ WireValue wt (convert src)
+                   | src <- toList (msg ^. f)
+                   ]
+            RepeatedField' Packed f
                 -> [WireValue Lengthy v]
                      where v = L.toStrict $ toLazyByteString
                                $ mconcat
