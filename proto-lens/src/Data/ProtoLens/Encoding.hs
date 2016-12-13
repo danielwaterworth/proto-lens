@@ -116,10 +116,10 @@ parseAndAddField
                   return $ over f (xs++) msg
               RepeatedField' Unpacked f -> do
                   x <- getSimpleVal
-                  return $ over f (V.cons x) msg
+                  return $ over f (flip V.snoc x) msg
               RepeatedField' Packed f -> do
                   xs <- getPackedVals
-                  return $ over f (V.fromList xs V.++) msg
+                  return $ over f (V.++ V.fromList (reverse xs)) msg
               MapField keyLens valueLens f -> do
                   entry <- getSimpleVal
                   return $ over f

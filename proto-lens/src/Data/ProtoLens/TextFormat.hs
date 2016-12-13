@@ -204,7 +204,7 @@ modifyField :: FieldAccessor msg value -> value -> msg -> msg
 modifyField (PlainField _ f) value = set f value
 modifyField (OptionalField f) value = set f (Just value)
 modifyField (RepeatedField _ f) value = over f (value :)
-modifyField (RepeatedField' _ f) value = over f (V.cons value)
+modifyField (RepeatedField' _ f) value = over f (flip V.snoc value)
 modifyField (MapField key value f) mapElem
     = over f (Map.insert (mapElem ^. key) (mapElem ^. value))
 

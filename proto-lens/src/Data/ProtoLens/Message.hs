@@ -209,6 +209,4 @@ reverseRepeatedFields fields x0
     reverseListField :: a -> FieldDescriptor a -> a
     reverseListField x (FieldDescriptor _ _ (RepeatedField _ f))
         = over f reverse x
-    reverseListField x (FieldDescriptor _ _ (RepeatedField' _ f))
-        = over f (V.fromList . reverse . V.toList) x
     reverseListField x _ = x
