@@ -94,7 +94,17 @@ getPackedVals
 getPackedVals name tag wt val fieldWt get = do
     Equal <- equalWireTypes name Lengthy wt
     let getElt = getWireValue fieldWt tag >>= runEither . get
-    V.fromList <$> parseOnly (Parse.manyTill' getElt endOfInput) val
+    case fieldWt of
+        Fixed32 ->
+            V.generateM (B.length val `div` 4) $ \i -> do
+                output <- parseOnly getElt $ B.take 4 $ B.drop (i * 4) val
+                output `seq` return output
+        Fixed64 ->
+            V.generateM (B.length val `div` 8) $ \i -> do
+                output <- parseOnly getElt $ B.take 8 $ B.drop (i * 8) val
+                output `seq` return output
+        _ ->
+            V.fromList <$> parseOnly (Parse.manyTill' getElt endOfInput) val
 
 parseAndAddField :: msg
                  -> FieldDescriptor msg
