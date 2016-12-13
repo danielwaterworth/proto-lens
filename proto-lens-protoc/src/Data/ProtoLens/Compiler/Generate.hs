@@ -127,6 +127,9 @@ importReexported m@(ModuleName () s) = (importSimple m') { importAs = Just m }
   where
     m' = ModuleName () $ "Data.ProtoLens.Reexport." ++ s
 
+strictType :: Type () -> Type ()
+strictType = TyBang () (BangedTy ()) (NoUnpackPragma ())
+
 generateMessageDecls :: SyntaxType
                      -> Env (QName ())
                      -> MessageInfo (Name ())
@@ -138,7 +141,7 @@ generateMessageDecls syntaxType env info =
     [ DataDecl () (DataType ()) Nothing (DHead () dataName)
         [QualConDecl () Nothing Nothing $ RecDecl () dataName
                   [FieldDecl () [recordFieldName f]
-                     (internalType (lensInfo syntaxType env f))
+                     (strictType (internalType (lensInfo syntaxType env f)))
                   | f <- fields
                   ]
         ]
