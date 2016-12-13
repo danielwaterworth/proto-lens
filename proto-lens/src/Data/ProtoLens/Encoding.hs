@@ -83,6 +83,19 @@ runEither :: Either String a -> Parser a
 runEither (Left x) = fail x
 runEither (Right x) = return x
 
+getPackedVals
+  :: String
+  -> Int
+  -> WireType a
+  -> a
+  -> WireType b
+  -> (b -> Either String c)
+  -> Either String (V.Vector c)
+getPackedVals name tag wt val fieldWt get = do
+    Equal <- equalWireTypes name Lengthy wt
+    let getElt = getWireValue fieldWt tag >>= runEither . get
+    V.fromList <$> parseOnly (Parse.manyTill' getElt endOfInput) val
+
 parseAndAddField :: msg
                  -> FieldDescriptor msg
                  -> TaggedValue
@@ -96,11 +109,6 @@ parseAndAddField
           getSimpleVal = do
               Equal <- equalWireTypes name fieldWt wt
               get val
-          -- Get a block of packed values, reversed.
-          getPackedVals = do
-              Equal <- equalWireTypes name Lengthy wt
-              let getElt = getWireValue fieldWt tag >>= runEither . get
-              parseOnly (manyReversedTill getElt endOfInput) val
           in case accessor of
               PlainField _ f -> do
                   x <- getSimpleVal
@@ -112,14 +120,14 @@ parseAndAddField
                   x <- getSimpleVal
                   return $ over f (x:) msg
               RepeatedField Packed f -> do
-                  xs <- getPackedVals
-                  return $ over f (xs++) msg
+                  xs <- getPackedVals name tag wt val fieldWt get
+                  return $ over f (reverse (V.toList xs) ++) msg
               RepeatedField' Unpacked f -> do
                   x <- getSimpleVal
                   return $ over f (flip V.snoc x) msg
               RepeatedField' Packed f -> do
-                  xs <- getPackedVals
-                  return $ over f (V.++ V.fromList (reverse xs)) msg
+                  xs <- getPackedVals name tag wt val fieldWt get
+                  return $ over f (V.++ xs) msg
               MapField keyLens valueLens f -> do
                   entry <- getSimpleVal
                   return $ over f
